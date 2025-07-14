@@ -52,14 +52,6 @@ nu:speak은 AI-Agent를 통해 사용자에게 실시간 개인 맞춤형 뉴스
 
 프로젝트 진행 중 발생할 수 있는 일반적인 문제점과 해결 방안을 안내합니다.
 
--   **문제점: `npm install` 또는 `npm start` 시 모듈 관련 오류**
-    -   **원인:** `package.json`에 명시된 의존성 모듈이 제대로 설치되지 않았거나, 버전 충돌이 발생했을 수 있습니다.
-    -   **해결:** 해당 프로젝트 디렉토리(`nuspeak/backend` 또는 `nuspeak/frontend`)에서 `npm install`을 다시 실행하여 모든 의존성을 설치합니다. `npm cache clean --force` 후 재시도하거나, `node_modules` 폴더와 `package-lock.json` 파일을 삭제한 후 `npm install`을 다시 실행해 볼 수 있습니다.
-
--   **문제점: 포트 충돌 (`Something is already running on port XXXX`)**
-    -   **원인:** 백엔드(기본 3001) 또는 프론트엔드(기본 3000) 포트가 다른 애플리케이션에 의해 이미 사용 중입니다.
-    -   **해결:** 해당 포트를 사용 중인 프로세스를 종료합니다. Windows의 경우 명령 프롬프트에서 `netstat -ano | findstr :XXXX` (XXXX는 포트 번호)로 PID를 찾고, `taskkill /PID YOUR_PID_HERE /F`로 종료합니다. 또는 `PORT=YYYY npm start`와 같이 다른 포트를 지정하여 실행합니다.
-
 -   **문제점: 환경 변수 미설정 또는 잘못된 설정**
     -   **원인:** `NEWS_API_KEY` 또는 `JWT_SECRET` 환경 변수가 백엔드 서버를 실행하는 터미널 세션에 올바르게 설정되지 않았습니다.
     -   **해결:** 백엔드 서버를 실행하기 전에 `set NEWS_API_KEY=YOUR_KEY` 및 `set JWT_SECRET=YOUR_SECRET` (Windows CMD 기준) 명령어를 **동일한 터미널**에서 실행했는지 확인합니다. 오타나 불필요한 공백이 없는지 주의 깊게 확인합니다.
@@ -74,24 +66,10 @@ nu:speak은 AI-Agent를 통해 사용자에게 실시간 개인 맞춤형 뉴스
         2.  백엔드 코드에서 `everything` 엔드포인트와 더 넓은 검색어(`q=korea&language=ko`)를 사용하는지 확인합니다.
         3.  백엔드 서버 터미널에 출력되는 로그(`Error fetching news:`)를 확인하여 구체적인 오류 메시지를 파악합니다.
 
--   **문제점: `TypeError: fetch is not a function` (백엔드)**
-    -   **원인:** `node-fetch` 모듈이 Node.js 환경에서 `fetch` 함수로 올바르게 임포트되지 않았습니다.
-    -   **해결:** `nuspeak/backend/index.js` 파일에서 `const fetch = require('node-fetch').default;`와 같이 `node-fetch`를 `default` 속성으로 임포트하도록 수정합니다.
-
--   **문제점: 프론트엔드 스타일/레이아웃 문제 (예: 배경색, 정렬)**
-    -   **원인:** Tailwind CSS 설정(`tailwind.config.js`, `postcss.config.js`)이 올바르지 않거나, CSS 변수 해석에 문제가 있거나, 브라우저 캐싱 문제일 수 있습니다.
-    -   **해결:**
-        1.  `tailwind.config.js`의 색상 정의가 `rgb()`와 같이 명확한 값으로 설정되었는지 확인합니다.
-        2.  `postcss-preset-env`와 같은 PostCSS 플러그인이 설치 및 설정되었는지 확인합니다.
-        3.  프론트엔드 개발 서버를 완전히 재시작하고, 브라우저 캐시를 지운 후(Ctrl+Shift+R 또는 Cmd+Shift+R) 다시 확인합니다.
-
--   **문제점: 로그인/회원가입 후 예상과 다른 동작 (예: 팝업이 바로 뜸)**
-    -   **원인:** 로그인/회원가입 성공 후 리다이렉션 로직이나 상태 관리 로직이 예상과 다르게 작동합니다.
-    -   **해결:** `App.js`, `Login.js`, `Register.js` 파일의 `onLoginSuccess` 콜백 호출 및 `navigate` 로직을 확인하여 의도한 대로 동작하는지 검토합니다.
 
 ## 4. 향후 계획
 
 -   사용자 피드백 반영 및 UI/UX 개선.
 -   뉴스 요약, 음성 변환, 만화 변환 등 AI 에이전트 기능 구현.
 -   추천 시스템 고도화 (사용자 행동 로그 기반).
--   배포 환경 구축 및 최적화.
+-   배포 환경 구축 및 최적화(도커,쿠버네티스).
