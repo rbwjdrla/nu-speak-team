@@ -16,6 +16,12 @@ nu:speak은 AI-Agent를 통해 사용자에게 실시간 개인 맞춤형 뉴스
 
 -   **Node.js**: v14 이상 (npm 포함)
 -   **PostgreSQL**: 데이터베이스 서버
+-   **Ollama**: 로컬에서 대규모 언어 모델을 실행하기 위한 도구
+    -   [Ollama 공식 웹사이트](https://ollama.com/download)에서 운영체제에 맞는 버전을 다운로드하여 설치하세요.
+    -   설치 후, 다음 명령어를 실행하여 `gemma3:latest` 모델을 다운로드합니다:
+        ```bash
+        ollama run gemma3:latest
+        ```
 
 ### 2. 환경 변수 설정
 
@@ -24,7 +30,7 @@ nu:speak은 AI-Agent를 통해 사용자에게 실시간 개인 맞춤형 뉴스
 #### a. NewsAPI Key (`NEWS_API_KEY`)
 
 -   **용도**: 뉴스 데이터를 가져오기 위한 NewsAPI.org의 API 키입니다.
--   **획득 방법**: [NewsAPI.org](https://newsapi.org/)에 접속하여 무료 개발자 계정을 생성하고 API 키를 발급받으세요. (한국 뉴스 지원)
+-   **획득 방법**: [NewsAPI.org](https://newsapi.org/)에 접속하여 무료 개발자 계정을 생성하고 API 키를 발급받으세요.
 -   **설정 방법**: 백엔드 서버를 실행할 터미널에서 다음 명령어를 입력합니다. `YOUR_NEWS_API_KEY`를 발급받은 실제 키로 대체하세요.
     -   **Windows (명령 프롬프트)**:
         ```cmd
@@ -37,7 +43,7 @@ nu:speak은 AI-Agent를 통해 사용자에게 실시간 개인 맞춤형 뉴스
 
 #### b. JWT Secret (`JWT_SECRET`)
 
--   **용도**: 사용자 인증(JWT)을 위한 비밀 키입니다. 이 키는 직접 생성해야 합니다.
+-   **용도**: 사용자 인증(JWT)을 위한 비밀 키입니다.
 -   **획득 방법**: 강력하고 예측 불가능한 문자열을 직접 생성합니다. 최소 32자 이상, 대소문자, 숫자, 특수문자를 포함하는 것이 좋습니다. 예를 들어, Node.js 환경에서 다음 명령어를 실행하여 생성할 수 있습니다:
     ```bash
     node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
@@ -52,11 +58,28 @@ nu:speak은 AI-Agent를 통해 사용자에게 실시간 개인 맞춤형 뉴스
         $env:JWT_SECRET="YOUR_GENERATED_JWT_KEY"
         ```
 
+#### c. Database URL (`DATABASE_URL`)
+
+-   **용도**: PostgreSQL 데이터베이스 연결 문자열입니다.
+-   **설정 방법**: PostgreSQL 데이터베이스의 연결 정보를 다음 형식으로 설정합니다. `YOUR_USERNAME`, `YOUR_PASSWORD`, `YOUR_HOST`, `YOUR_PORT`, `YOUR_DATABASE_NAME`을 실제 값으로 대체하세요.
+    -   **Windows (명령 프롬프트)**:
+        ```cmd
+        set DATABASE_URL="postgresql://YOUR_USERNAME:YOUR_PASSWORD@YOUR_HOST:YOUR_PORT/YOUR_DATABASE_NAME"
+        ```
+    -   **Windows (PowerShell)**:
+        ```powershell
+        $env:DATABASE_URL="postgresql://YOUR_USERNAME:YOUR_PASSWORD@YOUR_HOST:YOUR_PORT/YOUR_DATABASE_NAME"
+        ```
+    -   예시:
+        ```
+        postgresql://postgres:password@localhost:5432/nuspeak
+        ```
+
 ### 3. 데이터베이스 설정
 
 1.  PostgreSQL 서버가 실행 중인지 확인합니다.
 2.  PostgreSQL 클라이언트(예: `psql`, pgAdmin)에 접속합니다.
-3.  `nuspeak` 데이터베이스를 생성합니다:
+3.  `nuspeak` 데이터베이스를 생성합니다 (만약 아직 없다면):
     ```sql
     CREATE DATABASE nuspeak;
     ```
@@ -64,15 +87,19 @@ nu:speak은 AI-Agent를 통해 사용자에게 실시간 개인 맞춤형 뉴스
     ```sql
     \c nuspeak;
     ```
-5.  테이블 스키마를 적용합니다. `D:/github/nu-speak-team/nuspeak/backend/setup.sql` 파일의 경로를 정확히 지정해야 합니다:
+5.  테이블 스키마를 적용합니다. 다음 SQL 스크립트를 실행하여 `users` 테이블을 생성합니다:
     ```sql
-    \i D:/github/nu-speak-team/nuspeak/backend/setup.sql
+    CREATE TABLE users (
+        id SERIAL PRIMARY KEY,
+        email VARCHAR(255) UNIQUE NOT NULL,
+        password VARCHAR(255) NOT NULL,
+        preferences TEXT DEFAULT '[]'
+    );
     ```
-    (만약 `psql` 명령어를 찾을 수 없다면, PostgreSQL 설치 경로의 `bin` 디렉토리를 시스템 PATH 환경 변수에 추가해야 합니다.)
 
 ### 4. 백엔드 실행
 
-1.  **환경 변수 설정**: 위 2단계에서 설명한 `NEWS_API_KEY`와 `JWT_SECRET` 환경 변수를 백엔드 서버를 실행할 터미널에 설정합니다.
+1.  **환경 변수 설정**: 위 2단계에서 설명한 `NEWS_API_KEY`, `JWT_SECRET`, `DATABASE_URL` 환경 변수를 백엔드 서버를 실행할 터미널에 설정합니다.
 2.  백엔드 디렉토리로 이동하여 의존성 모듈을 설치합니다:
     ```bash
     cd nuspeak/backend
@@ -104,12 +131,13 @@ nu:speak은 AI-Agent를 통해 사용자에게 실시간 개인 맞춤형 뉴스
     -   프로세스 종료: `taskkill /PID YOUR_PID_HERE /F`
 -   **`Failed to fetch news` 또는 뉴스 표시 안됨**: 
     -   백엔드 서버가 실행 중인지 확인합니다.
-    -   백엔드 서버 터미널에 오류 메시지가 없는지 확인합니다. (`TypeError: fetch is not a function` 등)
-    -   `NEWS_API_KEY`가 올바르게 설정되었는지 확인합니다. (NewsAPI.org에서 직접 테스트)
-    -   브라우저 캐시를 지우고 새로고침합니다 (Ctrl+Shift+R 또는 Cmd+Shift+R).
--   **메인 페이지 배경색/스타일 문제**: 
-    -   `tailwind.config.js` 및 `postcss.config.js` 설정이 올바른지 확인합니다.
+    -   백엔드 서버 터미널에 오류 메시지가 없는지 확인합니다.
+    -   `NEWS_API_KEY`가 올바르게 설정되었는지 확인합니다.
     -   브라우저 캐시를 지우고 새로고침합니다.
+-   **Ollama 관련 오류**: 
+    -   Ollama가 실행 중인지 확인합니다 (`ollama list` 명령으로 확인).
+    -   `gemma3:latest` 모델이 다운로드되었는지 확인합니다.
+    -   Ollama 서버가 `http://localhost:11434`에서 실행 중인지 확인합니다.
 
 ## 프로젝트 현황
 
