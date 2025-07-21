@@ -1,12 +1,12 @@
 
 const { Pool } = require('pg');
 
+require('dotenv').config();
+
+console.log('DATABASE_URL from .env:', process.env.DATABASE_URL);
+
 const pool = new Pool({
-  user: 'postgres',
-  host: 'localhost',
-  database: 'nuspeak',
-  password: 'password',
-  port: 5432,
+  connectionString: process.env.DATABASE_URL,
 });
 
 module.exports = pool;
